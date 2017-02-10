@@ -52,10 +52,8 @@ app.get('/', function (req, res) {
 // get all books
 app.get('/api/books', function (req, res) {
   // send all books as JSON response
-  db.Book.find()
+  db.Book.find().populate('author').exec(function(err, books){
     // populate fills in the author id with all the author data
-    .populate('author')
-    .exec(function(err, books){
       if (err) { return console.log("index error: " + err); }
       res.json(books);
     });
@@ -80,11 +78,13 @@ app.post('/api/books', function (req, res) {
     image: req.body.image,
     releaseDate: req.body.releaseDate
   });
+  console.log("POST NEW BOOK", newBook);
   
   db.Author.find({name: req.body.author}, function(err, author){
     console.log("FIND RETURN:", author);
     if(author.length !== 0){
-      newBook.author = author;
+      newBook.author = author[0];
+      console.log("NEW BOOK RETURN AUTHOR", newBook)
       newBook.save(function(err, book){
         if(err){return console.log("ERROR!", err);}
         console.log("NEW BOOK", book.title);
@@ -106,18 +106,16 @@ app.post('/api/books', function (req, res) {
       })
     }
   })
-
 });
 
 // update book
 app.put('/api/books/:id', function(req,res){
 // get book id from url params (`req.params`)
-  console.log('books update', req.params);
+  console.log('BOOK UPDATE', req.params);
   var id = req.params.id;
   db.Book.findOne({_id: id}, function(err, book){
     if(err){console.log(err)};
     book.title = req.body.title;
-    book.author = req.body.author;
     book.image = req.body.image;
     book.releaseDate = req.body.releaseDate
     book.save(function(err, saved){

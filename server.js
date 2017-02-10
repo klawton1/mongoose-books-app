@@ -117,10 +117,32 @@ app.put('/api/books/:id', function(req,res){
     if(err){console.log(err)};
     book.title = req.body.title;
     book.image = req.body.image;
-    book.releaseDate = req.body.releaseDate
-    book.save(function(err, saved){
-      if(err){console.log(err)};
-      res.json(saved);
+    book.releaseDate = req.body.releaseDate;
+    db.Author.find({name: req.body.author}, function(err, author){
+      console.log("FIND RETURN IN PUT:", author);
+      if(author.length !== 0){
+        book.author = author[0];
+        console.log("NEW BOOK RETURN AUTHOR IN PUT", book)
+        book.save(function(err, book){
+          if(err){return console.log("ERROR!", err);}
+          console.log("NEW BOOK IN PUT", book.title);
+          res.json(book);
+        })
+      }
+      else{
+        var newAuthor = new db.Author({
+          name: req.body.author,
+          alive: true,
+        });
+        newAuthor.save(function(err, author){
+        console.log("MADE A NEW GUY IN PUT!", author);
+          book.author = author;
+          book.save(function(err, book){
+            res.json(book);
+          })
+
+        })
+      }
     })
   })
 });
